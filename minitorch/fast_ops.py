@@ -28,6 +28,7 @@ Fn = TypeVar("Fn")
 
 
 def njit(fn: Fn, **kwargs: Any) -> Fn:
+    """Just-in-time compile a function using Numba."""
     return _njit(inline="always", **kwargs)(fn)  # type: ignore
 
 
@@ -101,10 +102,12 @@ class FastOps(TensorOps):
             assert a.shape[-1] == b.shape[-2]
 
         Args:
+        ----
             a: The first input tensor.
             b: The second input tensor.
 
         Returns:
+        -------
             A new tensor containing the result of the matrix multiplication.
 
         """
@@ -122,7 +125,9 @@ class FastOps(TensorOps):
         output_shape = list(shape_broadcast(a.shape[:-2], b.shape[:-2]))
         output_shape.append(a.shape[-2])
         output_shape.append(b.shape[-1])
-        assert a.shape[-1] == b.shape[-2], "Matrix dimensions do not match for multiplication."
+        assert (
+            a.shape[-1] == b.shape[-2]
+        ), "Matrix dimensions do not match for multiplication."
         out = a.zeros(tuple(output_shape))
 
         tensor_matrix_multiply(*out.tuple(), *a.tuple(), *b.tuple())
@@ -150,9 +155,11 @@ def tensor_map(
     * Skips indexing when output and input tensors are stride-aligned.
 
     Args:
+    ----
         fn: A unary function to apply to each element.
 
     Returns:
+    -------
         A function that performs the element-wise operation.
 
     """
@@ -214,9 +221,11 @@ def tensor_zip(
     * Skips indexing when all tensors are stride-aligned.
 
     Args:
+    ----
         fn: A binary function to apply to each pair of elements.
 
     Returns:
+    -------
         A function that performs the element-wise binary operation.
 
     """
@@ -284,10 +293,12 @@ def tensor_reduce(
     * Inner loop avoids global writes and function calls.
 
     Args:
+    ----
         fn: A binary function to reduce elements.
         reduce_dim: The dimension along which to reduce.
 
     Returns:
+    -------
         A function that performs the reduction.
 
     """
@@ -363,6 +374,7 @@ def _tensor_matrix_multiply(
     * Inner loop performs a single multiply per iteration.
 
     Args:
+    ----
         out_storage: Storage for the output tensor.
         out_shape: Shape of the output tensor.
         out_strides: Strides of the output tensor.
@@ -374,6 +386,7 @@ def _tensor_matrix_multiply(
         b_strides: Strides of the second input tensor.
 
     Returns:
+    -------
         None. The result is stored in `out_storage`.
 
     """
@@ -386,15 +399,21 @@ def _tensor_matrix_multiply(
         for i in range(out_shape[1]):
             for j in range(out_shape[2]):
                 # Compute position in output storage
-                out_pos = batch_idx * out_strides[0] + i * out_strides[1] + j * out_strides[2]
+                out_pos = (
+                    batch_idx * out_strides[0] + i * out_strides[1] + j * out_strides[2]
+                )
 
                 # Initialize accumulator
                 sum_result = 0.0
 
                 # Perform the dot product
                 for k in range(a_shape[2]):
-                    a_pos = batch_idx * a_batch_stride + i * a_strides[1] + k * a_strides[2]
-                    b_pos = batch_idx * b_batch_stride + k * b_strides[1] + j * b_strides[2]
+                    a_pos = (
+                        batch_idx * a_batch_stride + i * a_strides[1] + k * a_strides[2]
+                    )
+                    b_pos = (
+                        batch_idx * b_batch_stride + k * b_strides[1] + j * b_strides[2]
+                    )
                     sum_result += a_storage[a_pos] * b_storage[b_pos]
 
                 # Store the computed value

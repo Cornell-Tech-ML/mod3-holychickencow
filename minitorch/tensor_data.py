@@ -142,6 +142,7 @@ def shape_broadcast(shape1: UserShape, shape2: UserShape) -> UserShape:
 
     return tuple(broadcasted)
 
+
 def strides_from_shape(shape: UserShape) -> UserStrides:
     """Return a contiguous stride for a shape"""
     layout = [1]

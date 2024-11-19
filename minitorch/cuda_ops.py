@@ -6,7 +6,6 @@ from typing import Callable, Optional, TypeVar, Any
 import numba
 from numba import cuda
 from numba.cuda import jit as _jit
-import numpy as np
 from .tensor import Tensor
 from .tensor_data import (
     MAX_DIMS,
@@ -135,7 +134,9 @@ class CudaOps(TensorOps):
         # Determine output shape after broadcasting
         out_shape = list(shape_broadcast(a.shape[:-2], b.shape[:-2]))
         out_shape.extend([a.shape[-2], b.shape[-1]])
-        assert a.shape[-1] == b.shape[-2], "Inner dimensions must match for matrix multiplication."
+        assert (
+            a.shape[-1] == b.shape[-2]
+        ), "Inner dimensions must match for matrix multiplication."
         out = a.zeros(tuple(out_shape))
 
         # Configure grid and block dimensions
@@ -259,10 +260,10 @@ def tensor_map(
 def tensor_zip(
     fn: Callable[[float, float], float],
 ) -> Callable[
-    [Storage, Shape, Strides, int, Storage, Shape, Strides, Storage, Shape, Strides], None
+    [Storage, Shape, Strides, int, Storage, Shape, Strides, Storage, Shape, Strides],
+    None,
 ]:
     """CUDA-optimized tensor zip function that applies a binary function element-wise."""
-    
     # Ensure fn is a device function
     cufn = device_jit(fn)
 
@@ -306,10 +307,8 @@ def tensor_zip(
     return cuda.jit()(_zip)
 
 
-
 def _sum_practice(out: Storage, a: Storage, size: int) -> None:
     """Practice CUDA kernel for summing elements in blocks."""
-
     BLOCK_DIM = 32
     shared_cache = cuda.shared.array(BLOCK_DIM, numba.float64)
     idx = cuda.blockIdx.x * cuda.blockDim.x + cuda.threadIdx.x
@@ -347,13 +346,17 @@ def sum_practice(a: Tensor) -> TensorData:
     blocks_per_grid = (size + threads_per_block - 1) // threads_per_block
     out = TensorData([0.0 for _ in range(blocks_per_grid)], (blocks_per_grid,))
     out.to_cuda_()
-    jit_sum_practice[blocks_per_grid, threads_per_block](out.tuple()[0], a._tensor._storage, size)
+    jit_sum_practice[blocks_per_grid, threads_per_block](
+        out.tuple()[0], a._tensor._storage, size
+    )
     return out
 
 
 def tensor_reduce(
     fn: Callable[[float, float], float],
-) -> Callable[[Storage, Shape, Strides, int, Storage, Shape, Strides, int, float], None]:
+) -> Callable[
+    [Storage, Shape, Strides, int, Storage, Shape, Strides, int, float], None
+]:
     """CUDA-optimized tensor reduce function that reduces a tensor along a specified dimension."""
 
     def _reduce(
@@ -417,7 +420,6 @@ def tensor_reduce(
 
 def _mm_practice(out: Storage, a: Storage, b: Storage, size: int) -> None:
     """Practice CUDA kernel for matrix multiplication with shared memory."""
-
     # Thread indices
     row = cuda.threadIdx.x
     col = cuda.threadIdx.y
@@ -476,7 +478,6 @@ def _tensor_matrix_multiply(
     b_strides: Strides,
 ) -> None:
     """CUDA kernel for batched matrix multiplication with shared memory optimization."""
-
     # Determine batch indices and strides
     batch = cuda.blockIdx.z
     a_batch_stride = a_strides[0] if a_shape[0] > 1 else 0
