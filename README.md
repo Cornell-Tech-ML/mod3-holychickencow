@@ -30,3 +30,20 @@ python sync_previous_module.py previous-module-dir current-module-dir
 The files that will be synced are:
 
         minitorch/tensor_data.py minitorch/tensor_functions.py minitorch/tensor_ops.py minitorch/operators.py minitorch/scalar.py minitorch/scalar_functions.py minitorch/module.py minitorch/autodiff.py minitorch/module.py project/run_manual.py project/run_scalar.py project/run_tensor.py minitorch/operators.py minitorch/module.py minitorch/autodiff.py minitorch/tensor.py minitorch/datasets.py minitorch/testing.py minitorch/optim.py
+
+# Timing summary
+Size: 64
+    fast: 0.00393
+    gpu: 0.00618
+Size: 128
+    fast: 0.01637
+    gpu: 0.01444
+Size: 256
+    fast: 0.10254
+    gpu: 0.04974
+Size: 512
+    fast: 0.99804
+    gpu: 0.19792
+Size: 1024
+    fast: 10.46135
+    gpu: 0.84202
