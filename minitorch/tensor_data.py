@@ -64,12 +64,12 @@ def to_index(ordinal: int, shape: Shape, out_index: OutIndex) -> None:
         out_index : return index corresponding to position.
 
     """
-    stride_factors = strides_from_shape(list(shape))
-    remaining = ordinal
-    for dim in range(len(shape)):
-        quotient = remaining // stride_factors[dim]
-        out_index[dim] = quotient
-        remaining = remaining % stride_factors[dim]
+    cur_ord = ordinal + 0
+
+    for i in range(len(shape) - 1, -1, -1):
+        sh = shape[i]
+        out_index[i] = int(cur_ord % sh)
+        cur_ord //= sh
 
 
 def broadcast_index(
@@ -93,11 +93,12 @@ def broadcast_index(
         None
 
     """
-    for i in range(len(shape)):
-        if shape[-i - 1] == 1:
-            out_index[-i - 1] = 0
+    for i, s in enumerate(shape):
+        if s > 1:
+            out_index[i] = big_index[i + (len(big_shape) - len(shape))]
         else:
-            out_index[-i - 1] = big_index[-i - 1]
+            out_index[i] = 0
+    return None
 
 
 def shape_broadcast(shape1: UserShape, shape2: UserShape) -> UserShape:
@@ -140,7 +141,6 @@ def shape_broadcast(shape1: UserShape, shape2: UserShape) -> UserShape:
             raise IndexingError(f"Shapes {shape1} and {shape2} are not broadcastable.")
 
     return tuple(broadcasted)
-
 
 def strides_from_shape(shape: UserShape) -> UserStrides:
     """Return a contiguous stride for a shape"""

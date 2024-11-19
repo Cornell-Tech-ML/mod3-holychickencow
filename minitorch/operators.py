@@ -83,7 +83,10 @@ def sigmoid(x: float) -> float:
 
 def relu(x: float) -> float:
     """Computes the ReLU function."""
-    return max(0.0, x)
+    if x > 0.0:
+        return x
+    else:
+        return 0.0
 
 
 def log(x: float) -> float:
