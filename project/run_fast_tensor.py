@@ -18,12 +18,15 @@ GPUBackend = None
 if numba.cuda.is_available():
     GPUBackend = minitorch.TensorBackend(minitorch.CudaOps)
 
+
 def default_log_fn(epoch, total_loss, correct, losses):
     print("Epoch ", epoch, " loss ", total_loss, " correct", correct)
+
 
 def RParam(*shape, backend):
     r = minitorch.rand(shape, backend=backend) - 0.5
     return minitorch.Parameter(r)
+
 
 class Network(minitorch.Module):
     def __init__(self, hidden, backend):
@@ -42,6 +45,7 @@ class Network(minitorch.Module):
         out = self.layer3(out).sigmoid()
         return out
 
+
 class Linear(minitorch.Module):
     def __init__(self, in_size, out_size, backend):
         super().__init__()
@@ -53,6 +57,7 @@ class Linear(minitorch.Module):
     def forward(self, x):
         # Perform linear transformation: multiply input by weights and add bias
         return x @ self.weights.value + self.bias.value
+
 
 class FastTrain:
     def __init__(self, hidden_layers, backend=FastTensorBackend):
@@ -103,6 +108,7 @@ class FastTrain:
                 correct = int(((out.detach() > 0.5) == y2).sum()[0])
                 log_fn(epoch, total_loss, correct, losses)
 
+
 if __name__ == "__main__":
     import argparse
 
@@ -132,6 +138,4 @@ if __name__ == "__main__":
     if args.BACKEND == "gpu" and GPUBackend is not None:
         backend = GPUBackend
 
-    FastTrain(
-        HIDDEN, backend=backend
-    ).train(data, RATE)
+    FastTrain(HIDDEN, backend=backend).train(data, RATE)
