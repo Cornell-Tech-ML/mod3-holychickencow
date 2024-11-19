@@ -276,11 +276,9 @@ class TensorData:
             raise IndexingError(
                 f"Invalid permutation order: {order}. Must include each dimension exactly once."
             )
-        current_data = self.tuple()
-        reordered_shape = tuple(current_data[1][dim] for dim in order)
-        reordered_strides = tuple(current_data[2][dim] for dim in order)
-        copied_storage = current_data[0].copy()
-        return TensorData(copied_storage, reordered_shape, reordered_strides)
+        reordered_shape = tuple(self.shape[dim] for dim in order)
+        reordered_strides = tuple(self.strides[dim] for dim in order)
+        return TensorData(self._storage, reordered_shape, reordered_strides)
 
     def to_string(self) -> str:
         """Convert to string"""
